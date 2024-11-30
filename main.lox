@@ -1,0 +1,8 @@
+var a = "HELLO";
+var v;
+print v; // error
+{
+    var a = "world";
+    print a;
+}
+print a;
