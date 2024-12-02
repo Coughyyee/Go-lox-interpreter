@@ -1,85 +1,78 @@
-// Package main implements a Lox language interpreter
 package main
 
-// Expr is the interface that all expression types must implement.
-// It defines the Visitor pattern for traversing the expression AST.
-type Expr interface {
-	accept(visitor ExprVisitor) interface{}
-}
-
-// ExprVisitor defines the interface for visiting different expression types.
-// Each method corresponds to a specific expression type in the AST.
 type ExprVisitor interface {
-	VisitAssignExpr(expr *AssignExpr) interface{}
-	VisitBinaryExpr(expr *BinaryExpr) interface{}
-	VisitGroupingExpr(expr *GroupingExpr) interface{}
-	VisitLiteralExpr(expr *LiteralExpr) interface{}
-	VisitUnaryExpr(expr *UnaryExpr) interface{}
-	VisitVariableExpr(expr *VariableExpr) interface{}
+	VisitAssignExpr(*AssignExpr) interface{}
+	VisitBinaryExpr(*BinaryExpr) interface{}
+	VisitGroupingExpr(*GroupingExpr) interface{}
+	VisitLiteralExpr(*LiteralExpr) interface{}
+	VisitLogicalExpr(*LogicalExpr) interface{}
+	VisitUnaryExpr(*UnaryExpr) interface{}
+	VisitVariableExpr(*VariableExpr) interface{}
 }
 
-// AssignExpr represents a variable assignment expression.
-// Example: x = 42
+type Expr interface {
+	accept(ExprVisitor) interface{}
+}
+
 type AssignExpr struct {
-	name  *Token      // The variable being assigned to
-	value Expr        // The value being assigned
+	name *Token
+	value Expr
 }
 
-// BinaryExpr represents a binary operation expression.
-// Example: a + b, x * y
 type BinaryExpr struct {
-	left     Expr    // Left operand
-	operator *Token  // Operator token
-	right    Expr    // Right operand
+	left Expr
+	operator *Token
+	right Expr
 }
 
-// GroupingExpr represents a parenthesized expression.
-// Example: (1 + 2)
 type GroupingExpr struct {
-	expression Expr  // The expression being grouped
+	expression Expr
 }
 
-// LiteralExpr represents a literal value expression.
-// Example: 42, "hello", true
 type LiteralExpr struct {
-	value interface{}  // The literal value
+	value interface{}
 }
 
-// UnaryExpr represents a unary operation expression.
-// Example: !true, -42
+type LogicalExpr struct {
+	left Expr
+	operator *Token
+	right Expr
+}
+
 type UnaryExpr struct {
-	operator *Token  // Operator token
-	right    Expr    // Operand
+	operator *Token
+	right Expr
 }
 
-// VariableExpr represents a variable reference expression.
-// Example: x, counter
 type VariableExpr struct {
-	name *Token  // The variable name token
+	name *Token
 }
 
-// Visitor pattern implementation methods
-
-func (e *AssignExpr) accept(visitor ExprVisitor) interface{} {
-	return visitor.VisitAssignExpr(e)
+func (a *AssignExpr) accept(visitor ExprVisitor) interface{} {
+	return visitor.VisitAssignExpr(a)
 }
 
-func (e *BinaryExpr) accept(visitor ExprVisitor) interface{} {
-	return visitor.VisitBinaryExpr(e)
+func (b *BinaryExpr) accept(visitor ExprVisitor) interface{} {
+	return visitor.VisitBinaryExpr(b)
 }
 
-func (e *GroupingExpr) accept(visitor ExprVisitor) interface{} {
-	return visitor.VisitGroupingExpr(e)
+func (g *GroupingExpr) accept(visitor ExprVisitor) interface{} {
+	return visitor.VisitGroupingExpr(g)
 }
 
-func (e *LiteralExpr) accept(visitor ExprVisitor) interface{} {
-	return visitor.VisitLiteralExpr(e)
+func (l *LiteralExpr) accept(visitor ExprVisitor) interface{} {
+	return visitor.VisitLiteralExpr(l)
 }
 
-func (e *UnaryExpr) accept(visitor ExprVisitor) interface{} {
-	return visitor.VisitUnaryExpr(e)
+func (l *LogicalExpr) accept(visitor ExprVisitor) interface{} {
+	return visitor.VisitLogicalExpr(l)
 }
 
-func (e *VariableExpr) accept(visitor ExprVisitor) interface{} {
-	return visitor.VisitVariableExpr(e)
+func (u *UnaryExpr) accept(visitor ExprVisitor) interface{} {
+	return visitor.VisitUnaryExpr(u)
 }
+
+func (v *VariableExpr) accept(visitor ExprVisitor) interface{} {
+	return visitor.VisitVariableExpr(v)
+}
+

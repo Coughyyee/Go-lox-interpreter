@@ -48,8 +48,20 @@ func (p *Parser) declaration() Stmt {
 
 // statement parses a statement (expression, print, block, etc.).
 func (p *Parser) statement() Stmt {
+	if p.match(FOR) {
+		return p.forStatement()
+	}
+
+	if p.match(IF) {
+		return p.ifStatement()
+	}
+
 	if p.match(PRINT) {
 		return p.printStatement()
+	}
+
+	if p.match(WHILE) {
+		return p.whileStatement()
 	}
 
 	if p.match(LEFT_BRACE) {
@@ -59,6 +71,83 @@ func (p *Parser) statement() Stmt {
 	}
 
 	return p.expressionStatement()
+}
+
+func (p *Parser) forStatement() Stmt {
+	p.consume(LEFT_PAREN, fmt.Sprintf("Expect %v'('%v after %v'for'%v.", YELLOW, RESET, YELLOW, RESET))
+
+	var initializer Stmt
+	if p.match(SEMICOLON) {
+		initializer = nil
+	} else if p.match(VAR) {
+		initializer = p.varDeclaration()
+	} else {
+		initializer = p.expressionStatement()
+	}
+
+	var condition Expr
+	if !p.check(SEMICOLON) {
+		condition = p.expression()
+	}
+	p.consume(SEMICOLON, fmt.Sprintf("Expected %v';'%v after loop condition.", YELLOW, RESET))
+
+	var increment Expr
+	if !p.check(RIGHT_PAREN) {
+		increment = p.expression()
+	}
+	p.consume(RIGHT_PAREN, fmt.Sprintf("Expected %v')'%v after for clauses.", YELLOW, RESET))
+	body := p.statement()
+
+	if increment != nil {
+		body = &BlockStmt{
+			statements: []Stmt{
+				body,
+				&ExpressionStmt{
+					expression: increment,
+				},
+			},
+		}
+	}
+
+	if condition == nil {
+		condition = &LiteralExpr{
+			value: true,
+		}
+	}
+	body = &WhileStmt{
+		condition: condition,
+		body: body,
+	}
+
+	if initializer != nil {
+		body = &BlockStmt{
+			[]Stmt{
+				initializer,
+				body,
+			},
+		}
+	}
+
+	return body
+}
+
+// ifStatement parses an if statement.
+func (p *Parser) ifStatement() Stmt {
+	p.consume(LEFT_PAREN, fmt.Sprintf("Expect %v'('%v after %v'if'%v.", YELLOW, RESET, YELLOW, RESET))
+	condition := p.expression()
+	p.consume(RIGHT_PAREN, fmt.Sprintf("Expect %v')'%v after if condition.", YELLOW, RESET))
+
+	thenBranch := p.statement()
+	var elseBranch Stmt
+	if p.match(ELSE) {
+		elseBranch = p.statement()
+	}
+
+	return &IfStmt{
+		condition:  condition,
+		thenBranch: thenBranch,
+		elseBranch: elseBranch,
+	}
 }
 
 // printStatement parses a print statement.
@@ -86,6 +175,18 @@ func (p *Parser) varDeclaration() Stmt {
 	}
 }
 
+func (p *Parser) whileStatement() Stmt {
+	p.consume(LEFT_PAREN, fmt.Sprintf("Expect %v'('%v after '%v'while'%v.", YELLOW, RESET, YELLOW, RESET))
+	condition := p.expression()
+	p.consume(RIGHT_PAREN, fmt.Sprintf("Expect %v')'%v after condition.", YELLOW, RESET))
+	body := p.statement()
+
+	return &WhileStmt{
+		condition: condition,
+		body: body,
+	}
+}
+
 // expressionStatement parses an expression statement.
 func (p *Parser) expressionStatement() Stmt {
 	expr := p.expression()
@@ -109,7 +210,7 @@ func (p *Parser) block() []Stmt {
 
 // assignment parses an assignment expression.
 func (p *Parser) assignment() Expr {
-	expr := p.equality()
+	expr := p.or()
 
 	if p.match(EQUAL) {
 		equals := p.previous()
@@ -125,6 +226,38 @@ func (p *Parser) assignment() Expr {
 		}
 
 		log.Fatal(ReportExit(p.peek().line, "", fmt.Sprintf("%v[%v]%v Invalid assignment target.", YELLOW, equals, RESET)))
+	}
+
+	return expr
+}
+
+func (p *Parser) or() Expr {
+	expr := p.and()
+
+	for p.match(OR) {
+		operator := p.previous()
+		right := p.and()
+		expr = &LogicalExpr{
+			left:     expr,
+			operator: operator,
+			right:    right,
+		}
+	}
+
+	return expr
+}
+
+func (p *Parser) and() Expr {
+	expr := p.equality()
+
+	for p.match(AND) {
+		operator := p.previous()
+		right := p.equality()
+		expr = &LogicalExpr{
+			left:     expr,
+			operator: operator,
+			right:    right,
+		}
 	}
 
 	return expr

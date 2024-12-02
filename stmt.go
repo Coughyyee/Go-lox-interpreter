@@ -1,47 +1,45 @@
-// Package main implements a Lox language interpreter
 package main
 
-// Stmt is the interface that all statement types must implement.
-// It defines the Visitor pattern for traversing the statement AST.
-type Stmt interface {
-	accept(visitor StmtVisitor) interface{}
-}
-
-// StmtVisitor defines the interface for visiting different statement types.
-// Each method corresponds to a specific statement type in the AST.
 type StmtVisitor interface {
-	VisitBlockStmt(stmt *BlockStmt) interface{}
-	VisitExpressionStmt(stmt *ExpressionStmt) interface{}
-	VisitPrintStmt(stmt *PrintStmt) interface{}
-	VisitVarStmt(stmt *VarStmt) interface{}
+	VisitBlockStmt(*BlockStmt) interface{}
+	VisitExpressionStmt(*ExpressionStmt) interface{}
+	VisitIfStmt(*IfStmt) interface{}
+	VisitPrintStmt(*PrintStmt) interface{}
+	VisitVarStmt(*VarStmt) interface{}
+	VisitWhileStmt(*WhileStmt) interface{}
 }
 
-// BlockStmt represents a block of statements.
-// Example: { stmt1; stmt2; }
+type Stmt interface {
+	accept(StmtVisitor) interface{}
+}
+
 type BlockStmt struct {
-	statements []Stmt  // List of statements in the block
+	statements []Stmt
 }
 
-// ExpressionStmt represents an expression statement.
-// Example: print "hello";
 type ExpressionStmt struct {
-	expression Expr  // The expression to evaluate
+	expression Expr
 }
 
-// PrintStmt represents a print statement.
-// Example: print "hello";
+type IfStmt struct {
+	condition Expr
+	thenBranch Stmt
+	elseBranch Stmt
+}
+
 type PrintStmt struct {
-	expression Expr  // The expression to print
+	expression Expr
 }
 
-// VarStmt represents a variable declaration statement.
-// Example: var x = 42;
 type VarStmt struct {
-	name        *Token  // The variable name token
-	initializer Expr    // The initial value expression (may be nil)
+	name *Token
+	initializer Expr
 }
 
-// Visitor pattern implementation methods
+type WhileStmt struct {
+	condition Expr
+	body Stmt
+}
 
 func (b *BlockStmt) accept(visitor StmtVisitor) interface{} {
 	return visitor.VisitBlockStmt(b)
@@ -51,6 +49,10 @@ func (e *ExpressionStmt) accept(visitor StmtVisitor) interface{} {
 	return visitor.VisitExpressionStmt(e)
 }
 
+func (i *IfStmt) accept(visitor StmtVisitor) interface{} {
+	return visitor.VisitIfStmt(i)
+}
+
 func (p *PrintStmt) accept(visitor StmtVisitor) interface{} {
 	return visitor.VisitPrintStmt(p)
 }
@@ -58,3 +60,8 @@ func (p *PrintStmt) accept(visitor StmtVisitor) interface{} {
 func (v *VarStmt) accept(visitor StmtVisitor) interface{} {
 	return visitor.VisitVarStmt(v)
 }
+
+func (w *WhileStmt) accept(visitor StmtVisitor) interface{} {
+	return visitor.VisitWhileStmt(w)
+}
+

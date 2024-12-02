@@ -34,16 +34,28 @@ func (i *Interpreter) VisitLiteralExpr(expr *LiteralExpr) interface{} {
 	return expr.value
 }
 
+func (i *Interpreter) VisitLogicalExpr(expr *LogicalExpr) interface{} {
+	left := i.evaluate(expr.left)
+
+	if expr.operator.tokenType == OR {
+		if i.isTruthy(left) { return left }
+	} else {
+		if !i.isTruthy(left) { return left }
+	}
+
+	return i.evaluate(expr.right)
+}
+
 // VisitGroupingExpr evaluates a grouping expression.
 // Evaluates the expression inside the parentheses.
 func (i *Interpreter) VisitGroupingExpr(expr *GroupingExpr) interface{} {
-	return i.evalutate(expr.expression)
+	return i.evaluate(expr.expression)
 }
 
 // VisitUnaryExpr evaluates a unary expression.
 // Handles negation (-) and logical not (!) operators.
 func (i *Interpreter) VisitUnaryExpr(expr *UnaryExpr) interface{} {
-	right := i.evalutate(expr.right)
+	right := i.evaluate(expr.right)
 
 	switch expr.operator.tokenType {
 	case BANG:
@@ -59,8 +71,8 @@ func (i *Interpreter) VisitUnaryExpr(expr *UnaryExpr) interface{} {
 // VisitBinaryExpr evaluates a binary expression.
 // Handles arithmetic, comparison, and equality operators.
 func (i *Interpreter) VisitBinaryExpr(expr *BinaryExpr) interface{} {
-	left := i.evalutate(expr.left)
-	right := i.evalutate(expr.right)
+	left := i.evaluate(expr.left)
+	right := i.evaluate(expr.right)
 
 	switch expr.operator.tokenType {
 	case MINUS:
@@ -136,14 +148,24 @@ func (i *Interpreter) VisitVariableExpr(expr *VariableExpr) interface{} {
 // VisitAssignExpr evaluates an assignment expression.
 // Updates the variable's value in the current environment.
 func (i *Interpreter) VisitAssignExpr(expr *AssignExpr) interface{} {
-	value := i.evalutate(expr.value)
+	value := i.evaluate(expr.value)
 	i.environment.assign(expr.name, value)
 	return value
 }
 
 // VisitExpressionStmt executes an expression statement.
 func (i *Interpreter) VisitExpressionStmt(stmt *ExpressionStmt) interface{} {
-	i.evalutate(stmt.expression)
+	i.evaluate(stmt.expression)
+	return nil
+}
+
+func (i *Interpreter) VisitIfStmt(stmt *IfStmt) interface{} {
+	if i.isTruthy(i.evaluate(stmt.condition)) {
+		i.execute(stmt.thenBranch)
+	} else if stmt.elseBranch != nil {
+		i.execute(stmt.elseBranch)
+	}
+
 	return nil
 }
 
@@ -155,7 +177,7 @@ func (i *Interpreter) VisitPrintStmt(stmt *PrintStmt) interface{} {
 	if v, ok := stmt.expression.(*VariableExpr); ok {
 		token = v.name
 	}
-	value := i.evalutate(stmt.expression)
+	value := i.evaluate(stmt.expression)
 	fmt.Println(stringify(token, value))
 	return nil
 }
@@ -165,11 +187,19 @@ func (i *Interpreter) VisitPrintStmt(stmt *PrintStmt) interface{} {
 func (i *Interpreter) VisitVarStmt(stmt *VarStmt) interface{} {
 	var value interface{}
 	if stmt.initializer != nil {
-		value = i.evalutate(stmt.initializer)
+		value = i.evaluate(stmt.initializer)
 	}
 
 	i.environment.define(stmt.name.lexeme, value)
 	return nil
+}
+
+func (i *Interpreter) VisitWhileStmt(stmt *WhileStmt) interface{} {
+    for i.isTruthy(i.evaluate(stmt.condition)) {
+        i.execute(stmt.body)
+    }
+
+    return nil
 }
 
 // VisitBlockStmt executes a block statement.
@@ -180,7 +210,7 @@ func (i *Interpreter) VisitBlockStmt(stmt *BlockStmt) interface{} {
 }
 
 // evaluate evaluates an expression and returns its value.
-func (i *Interpreter) evalutate(expr Expr) interface{} {
+func (i *Interpreter) evaluate(expr Expr) interface{} {
 	return expr.accept(i)
 }
 

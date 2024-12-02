@@ -1,8 +1,6 @@
-var a = "HELLO";
-var v;
-print v; // error
-{
-    var a = "world";
-    print a;
+for (var i = 0; i < 1000; i = i +) {
+    print i;
 }
-print a;
+
+// Add decrement and increment operators
+// Add break and continue keywords
