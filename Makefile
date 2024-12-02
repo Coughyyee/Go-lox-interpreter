@@ -1,11 +1,24 @@
+.PHONY: build run run_file test clean
+
+# Binary name and path
+BINARY_NAME=lox
+BINARY_PATH=bin/$(BINARY_NAME)
+
+# Ensure the bin directory exists
+$(shell mkdir -p bin)
+
 build:
-	@go build -o bin/lox main.go scanner.go token.go token_type.go error.go expr.go parser.go interpreter.go stmt.go environment.go lox.go
+	@go build -o $(BINARY_PATH) .
 
 run: build
-	@./bin/lox
+	@./$(BINARY_PATH)
 
 run_file: build
-	@./bin/lox main.lox
+	@./$(BINARY_PATH) main.lox
 
 test:
 	@go test ./... -v
+
+clean:
+	@rm -rf bin/
+	@go clean

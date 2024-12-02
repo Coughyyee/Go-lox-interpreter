@@ -18,12 +18,12 @@ func NewLox(hadError bool) *Lox {
 // run is the function that calls the interpreters interpreting functionalities.
 func (lox *Lox) run(source string) {
 	scanner := NewScanner(source, lox)
-	tokens := scanner.scanTokens()
+	tokens := scanner.ScanTokens()
 	parser := NewParser(tokens)
-	statements := parser.parse()
+	statements := parser.Parse()
 
 	interpreter := NewInterpreter()
-	interpreter.interpret(statements)
+	interpreter.Interpret(statements)
 
 	// fmt.Printf("\n%s%-15s%s %s%-50s%s %s%-50s%s\n\n",
 	// 	WHITE, "TOKEN ↓", RESET,

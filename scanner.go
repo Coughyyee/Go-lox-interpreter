@@ -1,3 +1,4 @@
+// Package main implements a Lox language interpreter
 package main
 
 import (
@@ -5,15 +6,18 @@ import (
 	"strconv"
 )
 
+// Scanner performs lexical analysis on Lox source code.
+// It converts the source text into a sequence of tokens.
 type Scanner struct {
-	source   string
-	tokens   []*Token
-	start    int
-	current  int
-	line     int
+	source   string    // The source code being scanned
+	tokens   []*Token  // List of tokens found during scanning
+	start    int       // Start position of the current lexeme
+	current  int       // Current position in the source
+	line     int       // Current line number being scanned
 	keywords map[string]TokenType
 }
 
+// NewScanner creates a new Scanner instance for the given source code.
 func NewScanner(source string, lox *Lox) *Scanner {
 	keywords := map[string]TokenType{
 		"and":    AND,
@@ -45,9 +49,9 @@ func NewScanner(source string, lox *Lox) *Scanner {
 	return &scanner
 }
 
-// scanTokens is the function that scans the tokens until the end of the file.
-// Each token is appended to the scanner.tokens array in the struct.
-func (scanner *Scanner) scanTokens() []*Token {
+// ScanTokens scans the source code and returns a list of tokens.
+// This is the main entry point for lexical analysis.
+func (scanner *Scanner) ScanTokens() []*Token {
 	for !scanner.isAtEnd() {
 		scanner.start = scanner.current
 		scanner.scanToken()
@@ -57,8 +61,8 @@ func (scanner *Scanner) scanTokens() []*Token {
 	return scanner.tokens
 }
 
-// scanToken is the function that scans indivisual tokens and adds the token
-// to the scanner.tokens arrray in the struct.
+// scanToken scans a single token from the source code.
+// It identifies keywords, identifiers, literals, and operators.
 func (scanner *Scanner) scanToken() {
 	c := scanner.advance()
 	switch c {
@@ -139,8 +143,8 @@ func (scanner *Scanner) scanToken() {
 	}
 }
 
-// identifier is the function that manages the type of token if a number
-// is scanned.
+// identifier handles identifier and keyword scanning.
+// It processes variable names and reserved keywords.
 func (scanner *Scanner) identifier() {
 	for scanner.isAlphaNumeric(scanner.peek()) {
 		scanner.advance()
@@ -155,7 +159,8 @@ func (scanner *Scanner) identifier() {
 	scanner.addToken(tokenType)
 }
 
-// number is the function that manages numbers scanned.
+// number handles numeric literal scanning.
+// It processes both integer and decimal numbers.
 func (scanner *Scanner) number() {
 	for scanner.isDigit(scanner.peek()) {
 		scanner.advance()
@@ -177,7 +182,8 @@ func (scanner *Scanner) number() {
 	scanner.addTokenLiteral(NUMBER, number)
 }
 
-// string is the function that manages strings scanned.
+// string handles string literal scanning.
+// It processes the characters between double quotes.
 func (scanner *Scanner) string() {
 	for scanner.peek() != '"' && !scanner.isAtEnd() {
 		if scanner.peek() == '\n' {
@@ -196,8 +202,8 @@ func (scanner *Scanner) string() {
 	scanner.addTokenLiteral(STRING, value)
 }
 
-// match is the function that returns a bool based on if the current character
-// is the same as the one passed into the parameter.
+// match checks if the next character matches the expected one.
+// Returns true and advances the cursor if there's a match.
 func (scanner *Scanner) match(expected byte) bool {
 	if scanner.isAtEnd() {
 		return false
@@ -209,8 +215,7 @@ func (scanner *Scanner) match(expected byte) bool {
 	return true
 }
 
-// peek is the function that returns the character that is one character ahead
-// of the current character being scanned.
+// peek returns the next character without advancing the cursor.
 func (scanner *Scanner) peek() byte {
 	if scanner.isAtEnd() {
 		return 0
@@ -218,8 +223,7 @@ func (scanner *Scanner) peek() byte {
 	return scanner.source[scanner.current]
 }
 
-// peekNext is the function that returns the character two characters ahead
-// of the current character being scanned.
+// peekNext returns the character after the next one without advancing.
 func (scanner *Scanner) peekNext() byte {
 	if scanner.current+1 >= len(scanner.source) {
 		return 0
@@ -245,14 +249,12 @@ func (scanner *Scanner) isDigit(c byte) bool {
 	return c >= '0' && c <= '9'
 }
 
-// isAtEnd is the function that returns bool based on if the scanner is at the
-// end of the source.
+// isAtEnd checks if we've reached the end of the source code.
 func (scanner *Scanner) isAtEnd() bool {
 	return scanner.current >= len(scanner.source)
 }
 
-// advance is the function that moves the scanners position one ahead and returns
-// the new current character.
+// advance returns the current character and moves the cursor forward.
 func (scanner *Scanner) advance() byte {
 	if scanner.current >= len(scanner.source) {
 		return byte(EOF)
@@ -262,8 +264,7 @@ func (scanner *Scanner) advance() byte {
 	return ch
 }
 
-// advance is the function that moves the scanners position two ahead and returns
-// the new current character.
+// advanceNext returns the character two positions ahead and moves the cursor two positions forward.
 func (scanner *Scanner) advanceNext() byte {
 	if scanner.current >= len(scanner.source) {
 		return byte(EOF)
@@ -273,12 +274,13 @@ func (scanner *Scanner) advanceNext() byte {
 	return ch
 }
 
-// addToken is the function that adds a token without any literal for the token.
+// addToken adds a new token to the token list.
+// It creates a token with the current lexeme and given type.
 func (scanner *Scanner) addToken(tokenType TokenType) {
 	scanner.addTokenLiteral(tokenType, nil)
 }
 
-// addTokenLiteral is the function that adds a token and a literal for the token.
+// addTokenLiteral adds a new token with a literal value to the token list.
 func (scanner *Scanner) addTokenLiteral(tokenType TokenType, literal interface{}) {
 	text := scanner.source[scanner.start:scanner.current]
 	scanner.tokens = append(scanner.tokens, NewToken(tokenType, text, literal, scanner.line))

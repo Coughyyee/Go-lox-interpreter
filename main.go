@@ -1,3 +1,6 @@
+// Package main implements a Lox language interpreter.
+// This is the main entry point for the interpreter, handling file execution
+// and interactive REPL mode.
 package main
 
 import (
@@ -5,15 +8,10 @@ import (
 	"os"
 )
 
-// ANSI escape codes for colored text.
-const (
-	RED    = "\033[31m"
-	YELLOW = "\033[33m"
-	GREEN  = "\033[32m"
-	WHITE  = "\033[97m"
-	RESET  = "\033[0m"
-)
-
+// main is the entry point of the Lox interpreter.
+// It supports two modes of operation:
+// 1. File execution: jlox [script]
+// 2. Interactive REPL: jlox
 func main() {
 	// log.SetFlags(0) // Removes the date before any log.Fatal().
 	args := os.Args

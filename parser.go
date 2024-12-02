@@ -1,3 +1,4 @@
+// Package main implements a Lox language interpreter
 package main
 
 import (
@@ -5,11 +6,14 @@ import (
 	"log"
 )
 
+// Parser implements a recursive descent parser for the Lox language.
+// It takes a sequence of tokens and produces an abstract syntax tree (AST).
 type Parser struct {
-	tokens  []*Token
-	current int
+	tokens  []*Token // List of tokens to parse
+	current int      // Current position in the token list
 }
 
+// NewParser creates a new Parser instance with the given tokens.
 func NewParser(tokens []*Token) *Parser {
 	return &Parser{
 		tokens:  tokens,
@@ -17,7 +21,9 @@ func NewParser(tokens []*Token) *Parser {
 	}
 }
 
-func (p *Parser) parse() []Stmt {
+// Parse parses the tokens and returns a slice of statements.
+// This is the entry point for syntactic analysis.
+func (p *Parser) Parse() []Stmt {
 	var statements []Stmt
 	for !p.isAtEnd() {
 		statements = append(statements, p.declaration())
@@ -26,10 +32,13 @@ func (p *Parser) parse() []Stmt {
 	return statements
 }
 
+// expression parses an expression.
+// Handles the lowest precedence level of expressions.
 func (p *Parser) expression() Expr {
 	return p.assignment()
 }
 
+// declaration parses a declaration statement (var, function, etc.).
 func (p *Parser) declaration() Stmt {
 	if p.match(VAR) {
 		return p.varDeclaration()
@@ -37,6 +46,7 @@ func (p *Parser) declaration() Stmt {
 	return p.statement()
 }
 
+// statement parses a statement (expression, print, block, etc.).
 func (p *Parser) statement() Stmt {
 	if p.match(PRINT) {
 		return p.printStatement()
@@ -51,6 +61,7 @@ func (p *Parser) statement() Stmt {
 	return p.expressionStatement()
 }
 
+// printStatement parses a print statement.
 func (p *Parser) printStatement() Stmt {
 	value := p.expression()
 	p.consume(SEMICOLON, fmt.Sprintf("Expect %v';'%v after value.", YELLOW, RESET))
@@ -59,6 +70,7 @@ func (p *Parser) printStatement() Stmt {
 	}
 }
 
+// varDeclaration parses a variable declaration statement.
 func (p *Parser) varDeclaration() Stmt {
 	name := p.consume(IDENTIFIER, "Expect variable name.")
 
@@ -74,6 +86,7 @@ func (p *Parser) varDeclaration() Stmt {
 	}
 }
 
+// expressionStatement parses an expression statement.
 func (p *Parser) expressionStatement() Stmt {
 	expr := p.expression()
 	p.consume(SEMICOLON, fmt.Sprintf("Expect %v';'%v after expression.", YELLOW, RESET))
@@ -82,6 +95,7 @@ func (p *Parser) expressionStatement() Stmt {
 	}
 }
 
+// block parses a block of statements.
 func (p *Parser) block() []Stmt {
 	var statements []Stmt
 
@@ -93,6 +107,7 @@ func (p *Parser) block() []Stmt {
 	return statements
 }
 
+// assignment parses an assignment expression.
 func (p *Parser) assignment() Expr {
 	expr := p.equality()
 
@@ -115,6 +130,7 @@ func (p *Parser) assignment() Expr {
 	return expr
 }
 
+// equality parses equality expressions (==, !=).
 func (p *Parser) equality() Expr {
 	expr := p.comparison()
 	for p.match(BANG_EQUAL, EQUAL_EQUAL) {
@@ -130,6 +146,7 @@ func (p *Parser) equality() Expr {
 	return expr
 }
 
+// comparison parses comparison expressions (>, >=, <, <=).
 func (p *Parser) comparison() Expr {
 	expr := p.term()
 	for p.match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL) {
@@ -145,6 +162,7 @@ func (p *Parser) comparison() Expr {
 	return expr
 }
 
+// term parses addition and subtraction expressions.
 func (p *Parser) term() Expr {
 	expr := p.factor()
 	for p.match(MINUS, PLUS) {
@@ -160,6 +178,7 @@ func (p *Parser) term() Expr {
 	return expr
 }
 
+// factor parses multiplication and division expressions.
 func (p *Parser) factor() Expr {
 	expr := p.unary()
 	for p.match(SLASH, STAR) {
@@ -175,6 +194,7 @@ func (p *Parser) factor() Expr {
 	return expr
 }
 
+// unary parses unary expressions (!expr, -expr).
 func (p *Parser) unary() Expr {
 	if p.match(BANG, MINUS) {
 		operator := p.previous()
@@ -188,6 +208,7 @@ func (p *Parser) unary() Expr {
 	return p.primary()
 }
 
+// primary parses primary expressions (literals, grouping).
 func (p *Parser) primary() Expr {
 	if p.match(FALSE) {
 		return &LiteralExpr{value: false}
@@ -221,6 +242,8 @@ func (p *Parser) primary() Expr {
 	return nil
 }
 
+// match checks if the current token matches any of the given types.
+// Returns true and advances if there's a match.
 func (p *Parser) match(types ...TokenType) bool {
 	for _, ttype := range types {
 		if p.check(ttype) {
@@ -232,6 +255,8 @@ func (p *Parser) match(types ...TokenType) bool {
 	return false
 }
 
+// consume consumes the current token if it matches the expected type.
+// Throws an error if it doesn't match.
 func (p *Parser) consume(tokenType TokenType, message string) *Token {
 	if p.check(tokenType) {
 		return p.advance()
@@ -241,6 +266,7 @@ func (p *Parser) consume(tokenType TokenType, message string) *Token {
 	return nil
 }
 
+// check checks if the current token is of the expected type.
 func (p *Parser) check(ttype TokenType) bool {
 	if p.isAtEnd() {
 		return false
@@ -248,6 +274,7 @@ func (p *Parser) check(ttype TokenType) bool {
 	return p.peek().tokenType == ttype
 }
 
+// advance moves to the next token and returns the previous one.
 func (p *Parser) advance() *Token {
 	if !p.isAtEnd() {
 		p.current++
@@ -255,18 +282,23 @@ func (p *Parser) advance() *Token {
 	return p.previous()
 }
 
+// isAtEnd checks if we've reached the end of the token list.
 func (p *Parser) isAtEnd() bool {
 	return p.peek().tokenType == EOF
 }
 
+// peek returns the current token without advancing.
 func (p *Parser) peek() *Token {
 	return p.tokens[p.current]
 }
 
+// previous returns the previous token.
 func (p *Parser) previous() *Token {
 	return p.tokens[p.current-1]
 }
 
+// synchronize recovers from a parse error by discarding tokens
+// until it reaches a likely statement boundary.
 func (p *Parser) synchronize() {
 	p.advance()
 

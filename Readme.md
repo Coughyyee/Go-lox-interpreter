@@ -1,10 +1,10 @@
 # Lox interpreter in Go
 
-Hello, this is an idea i got where you read through the e-book from crafting-interpreters on making an interpreter and rewrite it in golang. The programming language is going to be called Lox.
+Hello, this is a simple interpreter from the [crafting-interpreters The Lox Langugage](https://craftinginterpreters.com/the-lox-language.html) but rewritten in Go.
 
 The goal syntax of the project should be like the one seen here from the [crafting-interpreters The Lox Langugage](https://craftinginterpreters.com/the-lox-language.html).
 
-Im just making this in Go because its the language i want to work with and i like go.
+Im just making this in Go because its the language i like, thats really it. I hope you like it and that you can learn from it. This for me is also a learning experience but a fun and interesting one.
 
 ### Things I would like to change:
 
