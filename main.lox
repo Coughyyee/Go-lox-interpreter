@@ -1,5 +1,50 @@
-for (var i = 0; i < 1000; i = i +) {
+// Test 1: Basic break in for loop
+print "Test 1: Basic break in for loop";
+for (var i = 0; i < 5; i = i + 1) {
+    if (i == 2) {
+        print "Breaking at 2";
+        break;
+    }
     print i;
+}
+
+// Test 2: Break in nested loops
+print "\nTest 2: Break in nested loops";
+for (var i = 0; i < 3; i = i + 1) {
+    print "Outer loop: " + i;
+    for (var j = 0; j < 3; j = j + 1) {
+        print "Inner loop: " + j;
+        if (j == 1) {
+            print "Breaking inner loop";
+            break;
+        }
+    }
+}
+
+// Test 3: Break with variable scope
+print "\nTest 3: Break with variable scope";
+var x = "global";
+{
+    var x = "local";
+    for (var i = 0; i < 3; i = i + 1) {
+        print "x is: " + x;
+        if (i == 1) {
+            break;
+        }
+    }
+}
+print "Final x is: " + x;
+
+// Test 4: Break in while loop
+print "\nTest 4: Break in while loop";
+var count = 0;
+while (true) {
+    print count;
+    if (count == 2) {
+        print "Breaking infinite loop";
+        break;
+    }
+    count = count + 1;
 }
 
 // Add decrement and increment operators

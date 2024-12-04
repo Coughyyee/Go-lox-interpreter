@@ -11,6 +11,7 @@ import (
 type Parser struct {
 	tokens  []*Token // List of tokens to parse
 	current int      // Current position in the token list
+	loopDepth int    // Track nested loop depth
 }
 
 // NewParser creates a new Parser instance with the given tokens.
@@ -18,6 +19,7 @@ func NewParser(tokens []*Token) *Parser {
 	return &Parser{
 		tokens:  tokens,
 		current: 0,
+		loopDepth: 0,
 	}
 }
 
@@ -60,8 +62,16 @@ func (p *Parser) statement() Stmt {
 		return p.printStatement()
 	}
 
-	if p.match(WHILE) {
+	if p.match(WHILE) { 
 		return p.whileStatement()
+	}
+
+	if p.match(BREAK) {
+		if p.loopDepth == 0 {
+			log.Fatal(ReportExit(p.previous().line, "", "Cannot use 'break' outside of a loop."))
+		}
+		p.consume(SEMICOLON, fmt.Sprintf("Expected %v';'%v after 'break'.", YELLOW, RESET))
+		return &BreakStmt{}
 	}
 
 	if p.match(LEFT_BRACE) {
@@ -74,7 +84,10 @@ func (p *Parser) statement() Stmt {
 }
 
 func (p *Parser) forStatement() Stmt {
-	p.consume(LEFT_PAREN, fmt.Sprintf("Expect %v'('%v after %v'for'%v.", YELLOW, RESET, YELLOW, RESET))
+	p.consume(LEFT_PAREN, fmt.Sprintf("Expected %v'('%v after 'for'.", YELLOW, RESET))
+
+	p.loopDepth++
+	defer func() { p.loopDepth-- }()
 
 	var initializer Stmt
 	if p.match(SEMICOLON) {
@@ -96,35 +109,26 @@ func (p *Parser) forStatement() Stmt {
 		increment = p.expression()
 	}
 	p.consume(RIGHT_PAREN, fmt.Sprintf("Expected %v')'%v after for clauses.", YELLOW, RESET))
+
 	body := p.statement()
 
 	if increment != nil {
 		body = &BlockStmt{
 			statements: []Stmt{
 				body,
-				&ExpressionStmt{
-					expression: increment,
-				},
+				&ExpressionStmt{expression: increment},
 			},
 		}
 	}
 
 	if condition == nil {
-		condition = &LiteralExpr{
-			value: true,
-		}
+		condition = &LiteralExpr{value: true}
 	}
-	body = &WhileStmt{
-		condition: condition,
-		body: body,
-	}
+	body = &WhileStmt{condition: condition, body: body}
 
 	if initializer != nil {
 		body = &BlockStmt{
-			[]Stmt{
-				initializer,
-				body,
-			},
+			statements: []Stmt{initializer, body},
 		}
 	}
 
@@ -179,11 +183,14 @@ func (p *Parser) whileStatement() Stmt {
 	p.consume(LEFT_PAREN, fmt.Sprintf("Expect %v'('%v after '%v'while'%v.", YELLOW, RESET, YELLOW, RESET))
 	condition := p.expression()
 	p.consume(RIGHT_PAREN, fmt.Sprintf("Expect %v')'%v after condition.", YELLOW, RESET))
+
+	p.loopDepth++
 	body := p.statement()
+	p.loopDepth--
 
 	return &WhileStmt{
 		condition: condition,
-		body: body,
+		body:      body,
 	}
 }
 

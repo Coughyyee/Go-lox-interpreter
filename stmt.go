@@ -7,6 +7,7 @@ type StmtVisitor interface {
 	VisitPrintStmt(*PrintStmt) interface{}
 	VisitVarStmt(*VarStmt) interface{}
 	VisitWhileStmt(*WhileStmt) interface{}
+	VisitBreakStmt(*BreakStmt) interface{}
 }
 
 type Stmt interface {
@@ -41,6 +42,9 @@ type WhileStmt struct {
 	body Stmt
 }
 
+type BreakStmt struct {
+}
+
 func (b *BlockStmt) accept(visitor StmtVisitor) interface{} {
 	return visitor.VisitBlockStmt(b)
 }
@@ -63,5 +67,9 @@ func (v *VarStmt) accept(visitor StmtVisitor) interface{} {
 
 func (w *WhileStmt) accept(visitor StmtVisitor) interface{} {
 	return visitor.VisitWhileStmt(w)
+}
+
+func (b *BreakStmt) accept(visitor StmtVisitor) interface{} {
+	return visitor.VisitBreakStmt(b)
 }
 

@@ -49,6 +49,7 @@ const (
 	TRUE
 	VAR
 	WHILE
+	BREAK
 
 	EOF
 )
@@ -132,6 +133,8 @@ func (t TokenType) toString() string {
 		return "VAR"
 	case WHILE:
 		return "WHILE"
+	case BREAK:
+		return "BREAK"
 	case EOF:
 		return "EOF"
 	default:

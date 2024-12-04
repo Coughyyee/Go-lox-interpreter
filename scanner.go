@@ -36,6 +36,7 @@ func NewScanner(source string, lox *Lox) *Scanner {
 		"true":   TRUE,
 		"var":    VAR,
 		"while":  WHILE,
+		"break":  BREAK,
 	}
 
 	scanner := Scanner{

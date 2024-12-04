@@ -195,18 +195,50 @@ func (i *Interpreter) VisitVarStmt(stmt *VarStmt) interface{} {
 }
 
 func (i *Interpreter) VisitWhileStmt(stmt *WhileStmt) interface{} {
-    for i.isTruthy(i.evaluate(stmt.condition)) {
-        i.execute(stmt.body)
-    }
+	defer func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(*BreakError); !ok {
+				panic(r) // re-panic if it's not a break
+			}
+		}
+	}()
 
-    return nil
+	for i.isTruthy(i.evaluate(stmt.condition)) {
+		i.execute(stmt.body)
+	}
+	return nil
 }
 
 // VisitBlockStmt executes a block statement.
 // Creates a new environment for the block's scope.
 func (i *Interpreter) VisitBlockStmt(stmt *BlockStmt) interface{} {
-	i.executeBlock(stmt.statements, NewEnclosingEnvironment(i.environment))
+	previous := i.environment
+	defer func() {
+		i.environment = previous
+		if r := recover(); r != nil {
+			if _, ok := r.(*BreakError); ok {
+				panic(r) // re-panic break errors to propagate them up
+			}
+			panic(r) // re-panic other errors
+		}
+	}()
+
+	i.environment = NewEnclosingEnvironment(previous)
+	for _, statement := range stmt.statements {
+		i.execute(statement)
+	}
 	return nil
+}
+
+func (i *Interpreter) VisitBreakStmt(stmt *BreakStmt) interface{} {
+	panic(&BreakError{})
+}
+
+// BreakError is used to handle break statements
+type BreakError struct{}
+
+func (e *BreakError) Error() string {
+	return "Break statement"
 }
 
 // evaluate evaluates an expression and returns its value.
@@ -223,14 +255,14 @@ func (i *Interpreter) execute(stmt Stmt) {
 // Creates a new environment for the block's scope.
 func (i *Interpreter) executeBlock(statements []Stmt, environment *Environment) {
 	previous := i.environment
+	defer func() {
+		i.environment = previous
+	}()
 
 	i.environment = environment
-
 	for _, statement := range statements {
 		i.execute(statement)
 	}
-
-	i.environment = previous
 }
 
 // isTruthy determines if a value is considered true in Lox.

@@ -39,6 +39,7 @@ func main() {
 		"Print : Expr expression",
 		"Var : *Token name, Expr initializer",
 		"While : Expr condition, Stmt body",
+		"Break : ", // no values stored
 	})
 }
 
@@ -73,7 +74,9 @@ func defineAst(outputDir string, baseName string, types []string) error {
 		for _, arg := range arg_split {
 			trimed := strings.TrimLeft(arg, " ")
 			f := strings.Split(trimed, " ")
-			fields = append(fields, fmt.Sprintf("%s %s", f[1], f[0]))
+			if len(f) > 1 {
+				fields = append(fields, fmt.Sprintf("%s %s", f[1], f[0]))
+			}
 		}
 		treeTypes = append(treeTypes, TreeType{baseClassName: baseClassName, className: className, fields: fields})
 	}
