@@ -1,0 +1,14 @@
+fun sayHi(first, last) {
+    print "HI " + first + " " + last + "!";
+}
+
+fun a(b) {
+    if (b == 20) {
+        return b + 10;
+    }
+    return b;
+}
+
+sayHi("John", "Doe");
+var b = a(10);
+print b;

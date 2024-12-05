@@ -42,6 +42,9 @@ func (p *Parser) expression() Expr {
 
 // declaration parses a declaration statement (var, function, etc.).
 func (p *Parser) declaration() Stmt {
+	if p.match(FUN) {
+		return p.function("function")
+	}
 	if p.match(VAR) {
 		return p.varDeclaration()
 	}
@@ -60,6 +63,10 @@ func (p *Parser) statement() Stmt {
 
 	if p.match(PRINT) {
 		return p.printStatement()
+	}
+
+	if p.match(RETURN) {
+		return p.returnStatement()
 	}
 
 	if p.match(WHILE) { 
@@ -163,6 +170,20 @@ func (p *Parser) printStatement() Stmt {
 	}
 }
 
+func (p *Parser) returnStatement() Stmt {
+	keyword := p.previous()
+	var value Expr
+	if !p.check(SEMICOLON) {
+		value = p.expression()
+	}
+
+	p.consume(SEMICOLON, fmt.Sprintf("Expect %v';'%v after return value.", YELLOW, RESET))
+	return &ReturnStmt{
+		keyword: keyword,
+		value:   value,
+	}
+}
+
 // varDeclaration parses a variable declaration statement.
 func (p *Parser) varDeclaration() Stmt {
 	name := p.consume(IDENTIFIER, "Expect variable name.")
@@ -200,6 +221,37 @@ func (p *Parser) expressionStatement() Stmt {
 	p.consume(SEMICOLON, fmt.Sprintf("Expect %v';'%v after expression.", YELLOW, RESET))
 	return &ExpressionStmt{
 		expression: expr,
+	}
+}
+
+func (p *Parser) function(kind string) Stmt {
+	name := p.consume(IDENTIFIER, fmt.Sprintf("Expect %v name.", kind))
+	p.consume(LEFT_PAREN, fmt.Sprintf("Expect '(' after %v name.", kind))
+	
+	var parameters []*Token
+	if !p.check(RIGHT_PAREN) {
+		// Handle first parameter
+		if len(parameters) >= 255 {
+			log.Fatal(ReportExit(p.peek().line, "", "Can't have more than 255 parameters."))
+		}
+		parameters = append(parameters, p.consume(IDENTIFIER, "Expect parameter name."))
+		
+		// Handle any additional parameters
+		for p.match(COMMA) {
+			if len(parameters) >= 255 {
+				log.Fatal(ReportExit(p.peek().line, "", "Can't have more than 255 parameters."))
+			}
+			parameters = append(parameters, p.consume(IDENTIFIER, "Expect parameter name."))
+		}
+	}
+
+	p.consume(RIGHT_PAREN, fmt.Sprintf("Expect ')' after parameters."))
+	p.consume(LEFT_BRACE, fmt.Sprintf("Expect %v'{%v after %v body.", YELLOW, RESET, kind))
+	body := p.block()
+	return &FunctionStmt{
+		name:   name,
+		params: parameters,
+		body:   body,
 	}
 }
 
@@ -345,7 +397,41 @@ func (p *Parser) unary() Expr {
 		}
 	}
 
-	return p.primary()
+	return p.call()
+}
+
+func (p *Parser) finishCall(callee Expr) Expr {
+	var arguments []Expr
+
+	if !p.check(RIGHT_PAREN) {
+		arguments = append(arguments, p.expression())
+		if len(arguments) >= 255 {
+			log.Fatal(ReportExit(p.peek().line, "", "Can't have more than 255 arguments."))
+		}
+		for p.match(COMMA) {
+			arguments = append(arguments, p.expression())
+		}
+	}
+	paren := p.consume(RIGHT_PAREN, fmt.Sprintf("Expect %v')'%v after arguments.", YELLOW, RESET))
+	return &CallExpr{
+		callee:    callee,
+		paren:     paren,
+		arguments: arguments,
+	}
+}
+
+func (p *Parser) call() Expr {
+	expr := p.primary()
+
+	for {
+		if p.match(LEFT_PAREN) {
+			expr = p.finishCall(expr)
+		} else {
+			break
+		}
+	}
+
+	return expr
 }
 
 // primary parses primary expressions (literals, grouping).

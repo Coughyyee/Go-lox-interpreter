@@ -1,0 +1,31 @@
+// If statements
+if (true) print "true";
+if (false) print "false";
+
+if (true) {
+    print "block true";
+} else {
+    print "block false";
+}
+
+// While loops
+var i = 0;
+while (i < 3) {
+    print i;
+    i = i + 1;
+}
+
+// Break in while
+var j = 0;
+while (true) {
+    if (j >= 2) break;
+    print j;
+    j = j + 1;
+}
+
+// For loop equivalent using while
+var a = 0;
+while (a < 3) {
+    print a;
+    a = a + 1;
+}

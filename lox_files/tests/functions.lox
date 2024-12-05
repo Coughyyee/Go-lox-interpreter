@@ -1,0 +1,47 @@
+// Basic function
+fun sayHi() {
+    print "Hi!";
+}
+sayHi();
+
+// Function with parameters
+fun greet(name) {
+    print "Hello, " + name + "!";
+}
+greet("Bob");
+
+// Function with multiple parameters
+fun add(a, b) {
+    print a + b;
+}
+add(3, 4);
+
+// Nested function calls
+fun makeGreeting(name) {
+    print "Greetings, " + name + "!";
+}
+fun printGreeting(name) {
+    makeGreeting(name);
+}
+printGreeting("Alice");
+
+// Function with local variables
+fun counter() {
+    var count = 0;
+    count = count + 1;
+    print count;
+}
+counter();
+counter();
+
+
+fun add(a, b) {
+    return a + b;
+}
+
+fun subtract(a, b) {
+    return a - b;
+}
+
+print add(1, 2);
+print subtract(1, 2);

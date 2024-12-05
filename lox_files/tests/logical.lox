@@ -1,0 +1,21 @@
+// Comparison operators
+print 5 > 3;
+print 5 < 3;
+print 5 >= 5;
+print 5 <= 4;
+
+// Equality
+print 5 == 5;
+print 5 != 5;
+print "hello" == "hello";
+print "hello" != "world";
+
+// Logical operators
+print true and true;
+print true and false;
+print false or true;
+print false or false;
+
+// Not operator
+print !true;
+print !false;

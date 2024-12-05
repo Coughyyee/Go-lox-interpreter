@@ -3,6 +3,7 @@ package main
 type ExprVisitor interface {
 	VisitAssignExpr(*AssignExpr) interface{}
 	VisitBinaryExpr(*BinaryExpr) interface{}
+	VisitCallExpr(*CallExpr) interface{}
 	VisitGroupingExpr(*GroupingExpr) interface{}
 	VisitLiteralExpr(*LiteralExpr) interface{}
 	VisitLogicalExpr(*LogicalExpr) interface{}
@@ -23,6 +24,12 @@ type BinaryExpr struct {
 	left Expr
 	operator *Token
 	right Expr
+}
+
+type CallExpr struct {
+	callee Expr
+	paren *Token
+	arguments []Expr
 }
 
 type GroupingExpr struct {
@@ -54,6 +61,10 @@ func (a *AssignExpr) accept(visitor ExprVisitor) interface{} {
 
 func (b *BinaryExpr) accept(visitor ExprVisitor) interface{} {
 	return visitor.VisitBinaryExpr(b)
+}
+
+func (c *CallExpr) accept(visitor ExprVisitor) interface{} {
+	return visitor.VisitCallExpr(c)
 }
 
 func (g *GroupingExpr) accept(visitor ExprVisitor) interface{} {
